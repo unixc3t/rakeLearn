@@ -32,7 +32,7 @@ Rake::Task#needed?如果任务需要.我们就执行它的actions
 
 #### rule
 
-当任务没有被直接定义时,rule就是用来合成一个人物女巫,rules通常用来合成文件任务.
+当任务没有被直接定义时,rule就是用来组合一个任务,rules通常用来组织文件任务.
 
 
 #### task (Rake::Task)
