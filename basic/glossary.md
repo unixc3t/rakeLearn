@@ -1,3 +1,4 @@
+[原文链接](https://ruby.github.io/rake/doc/glossary_rdoc.html)
 ##### action
 
 为了执行一个任务而执行的代码,Actions是一个rakefile文件中的一段代码块.以do/end形式出现
