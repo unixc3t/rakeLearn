@@ -192,3 +192,157 @@ Translator位于lib/hola里面,使用require语句从Lib/hola.rb中得到,Transl
 [动态gemspec](https://github.com/wycats/newgem-template/blob/master/newgem.gemspec)
 来解决这个问题
 
+不断添加代码和添加更多目录是一样的操作过程,分割你的ruby文件确保他们有意义,为你的项目做正确的规划
+帮助你和未来的维护人员
+
+#### ADDING AN EXECUTABLE
+
+除了提供ruby代码库,gem也可以暴漏一个或多个可执行文件通过你的shell path ,或许最好的例子就是rake
+另一个非常游泳的就是prettify_json.rb文件,包含在这个[JSON](http://rubygems.org/gems/json) gem
+用来格式化json用一种可读的风格(默认被ruby 1.9引入), 下面是一个例子
+
+    % curl -s http://jsonip.com/ | \
+      prettify_json.rb
+    {
+      "ip": "24.60.248.134"
+    }
+
+加入一个可执行文件到gem很简单,你仅仅需要将你文件放到gem的bin目录,然后添加一个可执行列表到gemspec
+文件里,让我们天价一个到hola gem里, 首先创建文件保证它可执行.
+
+    % mkdir bin
+    % touch bin/hola
+    % chmod a+x bin/hola
+
+这个可执行文件本身需要一个[shebang](http://www.catb.org/jargon/html/S/shebang.html)
+目的是朝珠运行这个可执行文件的程序,hola的可执行文件类似下面
+
+    % cat bin/hola
+    #!/usr/bin/env ruby
+    
+    require 'hola'
+    puts Hola.hi(ARGV[0])
+
+上面代码做的就是,加载gem,传递第一个命令行参数作为说say hello要使用的语言,下面是运行的例子
+
+    % ruby -Ilib ./bin/hola
+    hello world
+    
+    % ruby -Ilib ./bin/hola spanish
+    hola mundo
+
+最后,当你推送你这个gem时,为了hola的可执行文件被包含进去,你需要添加到gemspec文件里.
+
+    % head -4 hola.gemspec
+    Gem::Specification.new do |s|
+      s.name        = 'hola'
+      s.version     = '0.0.1'
+      s.executables << 'hola'
+ 
+ 推送这个新gem后,你就有你自己的命令行工具了,你可以添加更多的可执行文件到bin目录里,然后添加一个
+ executables数组到gemspec文件里.
+ 
+ 注意: 你应该改变你的gem的版本号当推送一新的gem时
+ 
+ #### WRITING TESTS
+ 
+ 测试你的gem非常重要,不仅仅是帮助你确保你的代码正确工作,也是帮助其他人知道你的代码做了什么,当评估一个gem
+ 时,ruby开发者尝试查看测试程序,作为是否信任一份代码的重要因素
+ 
+ gems支持添加测试文件到打包到gem里,所以当gem被下载后可以运行
+ 
+ 
+ 总是一句话: 请测试你的代码
+ 
+ Test::Unit是ruby内建的测试uangjia,这里又使用它的[在线指南](https://github.com/seattlerb/minitest/blob/master/README.rdoc)
+ 也有很多其他适用于ruby的框架 rspec就是最流行之一
+ 
+ 让我们添加测试到Hola里,需要加入更多文件,命名一个rakefile文件,然后绑定一个新的测试目录,
+ 
+    % tree
+    .
+    ├── Rakefile
+    ├── bin
+    │   └── hola
+    ├── hola.gemspec
+    ├── lib
+    │   ├── hola
+    │   │   └── translator.rb
+    │   └── hola.rb
+    └── test
+        └── test_hola.rb
+ rakefile文件可以让你自动化的运行测试
+    
+    % cat Rakefile
+    require 'rake/testtask'
+    
+    Rake::TestTask.new do |t|
+      t.libs << 'test'
+    end
+    
+    desc "Run tests"
+    task :default => :test
+ 
+ 现在你可以运行 rake test 或者仅仅执行 rake 来运行测试 
+ 下面是测试程序
+    
+    % cat test/test_hola.rb
+    require 'minitest/autorun'
+    require 'hola'
+    
+    class HolaTest < Minitest::Test
+      def test_english_hello
+        assert_equal "hello world",
+          Hola.hi("english")
+      end
+    
+      def test_any_hello
+        assert_equal "hello world",
+          Hola.hi("ruby")
+      end
+    
+      def test_spanish_hello
+        assert_equal "hola mundo",
+          Hola.hi("spanish")
+      end
+    end
+ 
+ 最后运行测试
+ 
+    % rake test
+    (in /Users/qrush/Dev/ruby/hola)
+    Loaded suite
+    Started
+    ...
+    Finished in 0.000736 seconds.
+    
+    3 tests, 3 assertions, 0 failures, 0 errors, 0 skips
+    
+    Test run options: --seed 15331
+    
+ 
+ #### DOCUMENTING YOUR CODE
+ 
+ 默认情况,大多数gem使用rdoc生成文档,这有一些很好的[教程](http://docs.seattlerb.org/rdoc/RDoc/Markup.html)用来学习如何使用rdoc注释你的代码
+ 下面是一个例子
+    
+    # The main Hola driver
+    class Hola
+      # Say hi to the world!
+      #
+      # Example:
+      #   >> Hola.hi("spanish")
+      #   => hola mundo
+      #
+      # Arguments:
+      #   language: (String)
+    
+      def self.hi(language = "english")
+        translator = Translator.new(language)
+        puts translator.hi
+      end
+    end
+
+另一个好的选择就是YARD,因为当你Push一个gem后,rubyDoc.info网站会自动生成yardoc文档,yard向后兼容
+rdoc, 这有一个[指南](http://rubydoc.info/docs/yard/file/docs/GettingStarted.md)介绍如何使用
+
